@@ -37,8 +37,8 @@ class MusicSpider(scrapy.Spider):1
 			yield scrapy.Request(response.urljoin('http://musicforprogramming.net/' + next_url))
 			
 	def get_media_requests(self, item, info):
-    	url = item['file_urls']
-        meta = {'filename': item['title']}
-        yield scrapy.Request(url, meta=meta)
+		url = item['file_urls']
+		meta = {'filename': item['title']}
+		yield scrapy.Request(url, meta=meta)
 
 		
