@@ -12,7 +12,7 @@ class Songs(scrapy.Item):
 	files = scrapy.Field()
 	
 
-class MusicSpider(scrapy.Spider):1
+class MusicSpider(scrapy.Spider):
 	name = "music"
 	allowed_domains = ["musicforprogramming.net"]
 	start_urls = ['http://musicforprogramming.net/']
