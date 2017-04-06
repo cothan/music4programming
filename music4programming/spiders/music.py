@@ -19,9 +19,10 @@ class MyFilesPipeLine(FilesPipeline):
 		self.arg = arg
 		
 	def get_media_requests(self, item, info):
-		url = item['file_urls']
-		meta = {'filename': item['title']}
-		return scrapy.Request(url=url, meta=meta)
+		#url = item['file_urls']
+		#meta = {'filename': item['title']}
+		return [scrapy.Request(x, meta={'name': item["title"]})
+                for x in item.get('file_urls', [])]
 
 	def file_path(self, request, response=None, info=None):
 		return '{}.mp3'.format(request.meta['title'])
