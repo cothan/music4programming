@@ -21,10 +21,10 @@ class MyFilesPipeLine(FilesPipeline):
 	def get_media_requests(self, item, info):
 		url = item['file_urls']
 		meta = {'filename': item['title']}
-		yield scrapy.Request(url=url, meta=meta)
+		return scrapy.Request(url=url, meta=meta)
 
 	def file_path(self, request, response=None, info=None):
-		return request.meta.get('title', '')
+		return '{}.mp3'.format(request.meta['title'])
 
 
 class MusicSpider(scrapy.Spider):
