@@ -41,4 +41,6 @@ class MusicSpider(scrapy.Spider):
 		meta = {'filename': item['title']}
 		yield scrapy.Request(url, meta=meta)
 
-		
+	def file_path(self, request, response=None, info=None):
+		return request.meta.get('filename','')
+
