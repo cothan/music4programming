@@ -1,0 +1,252 @@
+// = Your Blog title
+// See https://hubpress.gitbooks.io/hubpress-knowledgebase/content/ for information about the parameters.
+// :hp-image: /covers/cover.png
+// :published_at: 2019-01-31
+:hp-tags: Music, crawl, scrapy, python
+// :hp-alt-title: My English Title
+
+# Download music using Scrapy Python 
+
+[quote]
+Because manual download or `wget, curl` are so mainstream. Let's do something different. 
+
+## A music page 
+
+From https://news.ycombinator.com[Hacker's News], I was introduced to http://musicforprogramming.net/[this page], for short, it's a kind of music which help people concentrate on what they are doing. 
+
+I love them, actually, I listen to many kind of music, liked EHM, TrapNation, BassNation (thanks to good earbuds), sometimes 80-90s, and most of the time is ambient sound. 
+
+To have a quite place to work in this city is like going to hell, it's really hard to focus on something without distractions. I turn off notifications in my phone (well, just disable connectting to wifi while it's sleeping), even more deactivate social sites. Still not enough. 
+
+Well, so why do I download these songs, why I just can't listen to them online. :)) The reason is simple, to save my neighbors bandwith. 
+
+## Choose a framework 
+
+Most of the thing I learn, whatever language I have learned, I choose it because of the frameworks. 
+
+Although the is simple, sure, you can use `requests` module and `beatifulsoup` to extract links then download it. Or even `wget`, `curl` with dirty tricks and long bash command. 
+
+Nevertheless, I want all-in-one solution. Well, a beautiful solution is the right solution. If you approach something with a horrible solution, then it's just an attempt to make it work. Many programmers I met fail into it, **just-make-it-work**, or in my language, people often pronounce the sentence as *just-make-it-worse*. Similar, right? 
+
+## Doing it
+
+If you expect something fancy here, hmm, I have nothing to offer in this post. This is my short time learning while bloggin in parallel.
+
+.Create and gen a crawl template
+[source,python]
+----
+
+$ scrapy startproject music4programming 
+
+New Scrapy project 'music4programming', using template directory '/home/cothan/anaconda2/lib/python2.7/site-packages/scrapy/templates/project', created in:
+    /home/cothan/Work/2017/scrapy-project/music4programming
+
+You can start your first spider with:
+    cd music4programming
+    scrapy genspider example example.com
+
+$ /music4programming$ scrapy genspider music musicforprogramming.net -t crawl
+Created spider 'music' using template 'crawl' in module:
+  music4programming.spiders.music
+----
+
+Let's take a look what it generates: 
+
+[source,python]
+----
+# -*- coding: utf-8 -*-
+import scrapy
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+
+
+class MusicSpider(CrawlSpider):
+    name = 'music'
+    allowed_domains = ['musicforprogramming.net']
+    start_urls = ['http://musicforprogramming.net/']
+
+    rules = (
+        Rule(LinkExtractor(allow=r'Items/'), callback='parse_item', follow=True),
+    )
+
+    def parse_item(self, response):
+        i = {}
+        #i['domain_id'] = response.xpath('//input[@id="sid"]/@value').extract()
+        #i['name'] = response.xpath('//div[@id="name"]').extract()
+        #i['description'] = response.xpath('//div[@id="description"]').extract()
+        return i
+----
+
+Seem good. Now, my advice is to leave it there. We will come back to it later. 
+
+Let's turn on the shell, which help me a lot to examine the commands
+
+[source,python]
+----
+$ scrapy shell http://musicforprogramming.net/
+[s] Available Scrapy objects:
+[s]   scrapy     scrapy module (contains scrapy.Request, scrapy.Selector, etc)
+[s]   crawler    <scrapy.crawler.Crawler object at 0x7eff828e2b50>
+[s]   item       {}
+[s]   request    <GET http://musicforprogramming.net/>
+[s]   response   <200 http://musicforprogramming.net/>
+[s]   settings   <scrapy.settings.Settings object at 0x7eff828e29d0>
+[s]   spider     <MusicSpider 'music' at 0x7eff7c625490>
+[s] Useful shortcuts:
+[s]   fetch(url[, redirect=True]) Fetch URL and update local objects (by default, redirects are followed)
+[s]   fetch(req)                  Fetch a scrapy.Request and update local objects 
+[s]   shelp()           Shell help (print this help)
+[s]   view(response)    View response in a browser
+
+# Because I have examined the view-source:http://musicforprogramming.net/, so I know where to extract, what we need. 
+
+# Extract title 
+In [29]: response.css('title::text')
+Out[29]: [<Selector xpath=u'descendant-or-self::title/text()' data=u'musicForProgramming("47: Abe Mangger");'>]
+
+In [30]: response.css('title::text').extract()
+Out[30]: [u'musicForProgramming("47: Abe Mangger");']
+
+In [31]: response.css('title::text').extract_first()
+Out[31]: u'musicForProgramming("47: Abe Mangger");'
+
+In [32]: response.css('title::text').extract_first()[len('musicForProgramming("'):-2]
+Out[32]: u'47: Abe Mangger"'
+
+In [33]: response.css('title::text').extract_first()[len('musicForProgramming("'):-3]
+Out[33]: u'47: Abe Mangger'
+
+# Extract link to the song 
+
+In [35]: src = response.xpath('//audio[@id="player"]/@src').extract_first() 
+
+In [36]: src
+Out[36]: u'http://datashat.net/music_for_programming_47-abe_mangger.mp3'
+
+In [37]: response.xpath('//audio[@id="player"]/@src').extract_first() 
+Out[37]: u'http://datashat.net/music_for_programming_47-abe_mangger.mp3'
+
+# We have name and link, let's proceed to download 
+
+----
+
+For brief, my scrapy idea is like how I interact with the website. 
+
+- I choose `start_url` to be the url I want to start. 
+- `allowed_domain` to make sure my spider stay in side my intended website
+- Click to the link, extract title of the song, extract mp3 link
+- Then download the mp3 in parallel. 
+
+To download, I use FilePipeLine, it's simple, just add 2 lines to `settings.py`
+
+----
+ITEM_PIPELINES = {'scrapy.pipelines.files.FilesPipeline': 1}
+
+FILES_STORE = '/home/cothan/Work/2017/scrapy-project/music4programming/music4programming/sound'
+----
+
+
+`PipeLine` need items, which is a kind of a dict to download file. So create it:
+
+[source,python]
+----
+import scrapy
+
+
+class Songs(scrapy.Item):
+	"""docstring for Songs"""
+	#def __init__(self, arg):
+		#super(Songs, self).__init__()
+	title = scrapy.Field()
+	file_urls = scrapy.Field()
+	files = scrapy.Field()
+	
+----
+
+With each song, it will be push to be download thanks to two parameters: `file_urls` and `files`. Don't touch the name, it's default name for this job. 
+
+Lastly, for the `loop` in website, we check every `href` in the site, then proceed to download. *One thing you should remember, don't care about duplicate links, scrapy will automatically skip visited link*. Life is easy, yay. 
+
+From one song, we move the next song by find the next `href` in `href list`, and increase our counter and join to Request.
+
+In case you don't know how many song are there, just use `try` and `except`.
+
+.music.py
+[source,python]
+----
+class MusicSpider(scrapy.Spider):
+	name = "music"
+	allowed_domains = ["musicforprogramming.net"]
+	start_urls = ['http://musicforprogramming.net/']
+
+	count = 0 
+
+	def parse(self, response):
+		# The name alone contains u'musicForProgramming("47: Abe Mangger");'
+		# So we strip out to get the name of the song only
+		title = response.css('title::text').extract_first()[len('musicForProgramming("'):-3]
+		src = response.xpath('//audio[@id="player"]/@src').extract_first() 
+
+		self.count += 1
+		if self.count >= 46:
+			return
+
+		yield Songs(title=title, file_urls=[src])
+
+		next_url = response.xpath('//div[@id="episodes"]/a/@href').extract()[self.count]
+		
+		if next_url is not None:
+			yield scrapy.Request(response.urljoin('http://musicforprogramming.net/' + next_url))
+			
+----
+
+
+---
+Yes, that's full script. Let's run. 
+
+----
+/music4programming$ scrapy crawl music -o out.json
+----
+
+Well it's almost done here, I still don't feel satisfy with the filename. 
+
+----
+# ls
+076b625ad54f779573f20f5787ee34deff468ef3.mp3 f62cbff3d9b263fb5555c7361114b9e9fb425b6c.mp3
+655d005d695839a1ef929642b3c8c9fa535c5f63.mp3  b8142b41d3aadc8312e75e576892522f9cd8b621.mp3  fd603aeaa765054fcf9eabaad925d3c18d18a321.mp3
+...
+----
+
+If it's stored like that, what the hell why I want to extract title?
+Well, at the moment I have no idea (my attempts) to change saved filename. 
+An additional script can help change filename. But I don't like that. 
+
+
+In conclusion, for crawl images, files, musics, scrapy is a excelent framework to work with. It handles a lot of things for you, timeout, exception, parallel, distributed script... Yeah, it's worth a try.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
