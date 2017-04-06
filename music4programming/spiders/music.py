@@ -10,7 +10,15 @@ class Songs(scrapy.Item):
 	title = scrapy.Field()
 	file_urls = scrapy.Field()
 	files = scrapy.Field()
-	
+
+	def get_media_requests(self, item, info):
+		url = item['file_urls']
+		meta = {'filename': item['title']}
+		yield scrapy.Request(url, meta=meta)
+
+	def file_path(self, request, response=None, info=None):
+		return request.meta.get('filename','')
+
 
 class MusicSpider(scrapy.Spider):
 	name = "music"
@@ -36,11 +44,4 @@ class MusicSpider(scrapy.Spider):
 		if next_url is not None:
 			yield scrapy.Request(response.urljoin('http://musicforprogramming.net/' + next_url))
 			
-	def get_media_requests(self, item, info):
-		url = item['file_urls']
-		meta = {'filename': item['title']}
-		yield scrapy.Request(url, meta=meta)
-
-	def file_path(self, request, response=None, info=None):
-		return request.meta.get('filename','')
-
+	
