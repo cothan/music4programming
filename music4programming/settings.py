@@ -66,7 +66,7 @@ ROBOTSTXT_OBEY = True
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {'scrapy.pipelines.files.FilesPipeline': 1}
 
-FILES_STORE = '/home/cothan/Work/2017/scrapy-project/music4programming/music4programming/sound'
+FILES_STORE = 'sound'
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
 #AUTOTHROTTLE_ENABLED = True
