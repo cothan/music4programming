@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #from scrapy.http.request import Request
 import scrapy
-
+from scrapy.pipelines.files import FilesPipeline
 
 class Songs(scrapy.Item):
 	"""docstring for Songs"""
@@ -12,16 +12,16 @@ class Songs(scrapy.Item):
 	files = scrapy.Field()
 
 
-class MyFilesPipeLine(scrapy.pipelines.files.FilesPipeline):
+class MyFilesPipeLine(FilesPipeline):
 	"""docstring for MyFilesPipeLine"""
 	def __init__(self, arg):
 		super(MyFilesPipeLine, self).__init__()
 		self.arg = arg
 		
 	def get_media_requests(self, item, info):
-		url = item['file_urls']
-		meta = {'filename': item['title']}
-		yield scrapy.Request(url, meta=meta)
+		for url in item['file_urls']:
+			meta = {'filename': item['title']}
+			yield scrapy.Request(url, meta=meta)
 
 	def file_path(self, request, response=None, info=None):
 		return request.meta.get('filename','')
