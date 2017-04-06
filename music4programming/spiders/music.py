@@ -11,6 +11,13 @@ class Songs(scrapy.Item):
 	file_urls = scrapy.Field()
 	files = scrapy.Field()
 
+
+class MyFilesPipeLine(scrapy.pipelines.files.FilesPipeline):
+	"""docstring for MyFilesPipeLine"""
+	def __init__(self, arg):
+		super(MyFilesPipeLine, self).__init__()
+		self.arg = arg
+		
 	def get_media_requests(self, item, info):
 		url = item['file_urls']
 		meta = {'filename': item['title']}
