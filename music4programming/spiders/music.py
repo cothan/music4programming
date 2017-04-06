@@ -41,7 +41,7 @@ class MusicSpider(scrapy.Spider):
 		src = response.xpath('//audio[@id="player"]/@src').extract_first() 
 
 		self.count += 1
-		if self.count >= 46:
+		if self.count >= 48:
 			return
 
 		yield Songs(title=title, file_urls=[src])
