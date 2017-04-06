@@ -8,6 +8,7 @@ class Songs(scrapy.Item):
 	#def __init__(self, arg):
 		#super(Songs, self).__init__()
 	title = scrapy.Field()
+	name = scrapy.Field() 
 	file_urls = scrapy.Field()
 	files = scrapy.Field()
 
@@ -21,11 +22,11 @@ class MyFilesPipeLine(FilesPipeline):
 	def get_media_requests(self, item, info):
 		#url = item['file_urls']
 		#meta = {'filename': item['title']}
-		return [scrapy.Request(x, meta={'name': item["title"]})
+		return [scrapy.Request(x, meta={'name': item["name"]})
                 for x in item.get('file_urls', [])]
 
 	def file_path(self, request, response=None, info=None):
-		return '{}.mp3'.format(request.meta['title'])
+		return '{}.mp3'.format(request.meta['name'])
 
 
 class MusicSpider(scrapy.Spider):
@@ -42,10 +43,10 @@ class MusicSpider(scrapy.Spider):
 		src = response.xpath('//audio[@id="player"]/@src').extract_first() 
 
 		self.count += 1
-		if self.count >= 46:
+		if self.count >= 47:
 			return
 
-		yield Songs(title=title, file_urls=[src])
+		yield Songs(name=title, file_urls=[src])
 
 		next_url = response.xpath('//div[@id="episodes"]/a/@href').extract()[self.count]
 		
